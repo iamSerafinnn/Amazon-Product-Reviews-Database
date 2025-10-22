@@ -6,6 +6,9 @@ https://huggingface.co/datasets/McAuley-Lab/Amazon-Reviews-2023/blob/main/raw_me
 We cleaned the amazon dataset by taking out rows with no price, empty features, empty description, no main category, and removed the last three null columns. the cleaned dataset is linked bellow:
 https://drive.google.com/file/d/15sY1xVYFIWQgI9gmd1HVHm9DU3wsrv9b/view?usp=drive_link 
 
+## Running the dataset init:
+1. to start the postgres services: brew services start postgresql
+2. to run the sql init: psql -U ali -d postgres -f init_database_products.sql
 
 ## Goals:
-We aim to create a retrieval-augmented framework to extract similar electronic products based on a given query. We are modeling a category of amazon products in a relatinal database and aim to .
+We aim to create a retrieval-augmented framework to extract similar electronic products based on a given query. We are modeling a category of amazon products in a relatinal database.
