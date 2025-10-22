@@ -1,5 +1,24 @@
+-- Drop and recreate the database
+DROP DATABASE IF EXISTS products_database;
+CREATE DATABASE products_database;
+
+-- Connect to the new database
+\c products_database;
+
+-- Drop tables if they already exist (in reverse dependency order)
+DROP TABLE IF EXISTS QueryLog_Product CASCADE;
+DROP TABLE IF EXISTS ProductCategory CASCADE;
+DROP TABLE IF EXISTS QueryLog CASCADE;
+DROP TABLE IF EXISTS Product CASCADE;
+DROP TABLE IF EXISTS Category CASCADE;
+DROP TABLE IF EXISTS Curator CASCADE;
+DROP TABLE IF EXISTS Admin CASCADE;
+DROP TABLE IF EXISTS EndUser CASCADE;
+DROP TABLE IF EXISTS Users CASCADE;
+
+
 -- Parent  table: Users
-CREATE TABLE USERS (
+CREATE TABLE Users (
     user_id INT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL
@@ -24,9 +43,16 @@ CREATE TABLE Curator (
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
 
--- Document table
+
+-- Category table
+CREATE TABLE Category (
+    category_id INT PRIMARY KEY,
+    title VARCHAR(100) NOT NULL
+);
+
+-- Product table
 CREATE TABLE Product (
-    document_id INT PRIMARY KEY,
+    product_id INT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     type VARCHAR(50),  -- idk why we need this, we can use it as the link to the product or something like that
     source VARCHAR(255),
@@ -46,12 +72,12 @@ CREATE TABLE Product (
     FOREIGN KEY (main_category_id) REFERENCES Category(category_id)
 );
 -- we could also implemet categores list json list in the product.
--- Many-to-many association: Document ↔ Category
-CREATE TABLE DocumentCategory (
-    document_id INT,
+-- Many-to-many association: Product ↔ Category
+CREATE TABLE ProductCategory (
+    product_id INT,
     category_id INT,
-    PRIMARY KEY (document_id, category_id),
-    FOREIGN KEY (document_id) REFERENCES Document(document_id),
+    PRIMARY KEY (product_id, category_id),
+    FOREIGN KEY (product_id) REFERENCES Product(product_id),
     FOREIGN KEY (category_id) REFERENCES Category(category_id)
 );
 
@@ -64,11 +90,11 @@ CREATE TABLE QueryLog (
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
 
--- Association table to store which documents were retrieved by a query
-CREATE TABLE QueryLog_Document (
+-- Association table to store which Products were retrieved by a query
+CREATE TABLE QueryLog_Product (
     query_id INT,
-    document_id INT,
-    PRIMARY KEY (query_id, document_id),
+    product_id INT,
+    PRIMARY KEY (query_id, product_id),
     FOREIGN KEY (query_id) REFERENCES QueryLog(query_id),
-    FOREIGN KEY (document_id) REFERENCES Document(document_id)
+    FOREIGN KEY (product_id) REFERENCES Product(product_id)
 );
