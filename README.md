@@ -28,7 +28,46 @@ brew services start postgresql
 psql -U $(whoami) -d postgres -f init_database_products.sqll
 ```
 
+## ⚙️ Optional Docker Dataset Initialization
 
+1. **Pull PostgreSQL Docker Image**
+```bash
+docker pull postgres
+```
+2. **Run PostgreSQL Container**
+```bash
+docker run --name postgresql \
+  -e POSTGRES_PASSWORD=password \
+  -d -p 5432:5432 postgres
+```
+3. **Copy SQL file to container**
+```bash
+docker cp init_database_products.sql postgresql:/tmp/
+```
+4. **Execute SQL file**
+```bash
+docker exec -i postgresql psql -U postgres -d postgres -f /tmp/init_database_products.sql
+```
+5. **List databases**
+```bash
+docker exec -it postgresql psql -U postgres -c "\l"
+```
+6. **Connect to database**
+```bash
+docker exec -it postgresql psql -U postgres -d products_database
+```
+7. **List tables**
+```bash
+\dt
+```
+8. **View table structure**
+```bash
+\d table_name
+```
+9. **Exit PostgreSQL**
+```bash
+\q
+```
 ---
 
 ## Goals
