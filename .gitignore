@@ -2,7 +2,7 @@
 .DS_Store
 
 # Data folder
-/data/
+/data/*.parquet
 
 # Python
 __pycache__/
