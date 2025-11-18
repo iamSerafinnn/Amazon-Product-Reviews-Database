@@ -9,6 +9,7 @@ import json
 
 #Handling Numeric Arrays For Embeddings
 import numpy as np
+import pandas as pd
 
 #Adding A Pre-Trained Embedding Model
 from sentence_transformers import SentenceTransformer
@@ -18,6 +19,8 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 #The Library FAISS Used For Building The Vector Index
 import faiss
+
+
 #_______________________________________________________________________
 
 
@@ -25,22 +28,31 @@ import faiss
 #Process of loading the files and reading them into a document
 #_______________________________________________________________________
 def load_documents(data_dir="data"):
-    #Constructing the list to store document informations
     docs = []
-
-    #Access every file in the folder
-    for filename in os.listdir(data_dir):
-
-        #For every TEXT file in the folder ONLY, read the contents of the file
-        #and store it inside a doc. Then, add that document to the list of
-        #documents
-        if (filename.endswith('txt')):
-            with open(os.path.join(data_dir, filename), "r", encoding="utf-8") as file:
-                doc = file.read()
-                docs.append(doc)
-
-    #After reading the files, return the documents
+    csv_path = os.path.join(data_dir, "sample500.csv")
+    if os.path.exists(csv_path):
+        try:
+            df = pd.read_csv(csv_path)
+            for desc in df['description']:
+                if isinstance(desc, str) and len(desc.strip()) > 0:
+                    docs.append(desc)
+            print(f"Loaded {len(docs)} documents from CSV")
+        except Exception as e:
+            print(f"Error reading CSV")
+    else:
+        # Fallback to original text file loading
+        docs = []
+        #Access every file in the folder
+        for filename in os.listdir(data_dir):
+            #For every TEXT file in the folder ONLY, read the contents of the file
+            #and store it inside a doc. Then, add that document to the list of
+            #documents
+            if filename.endswith('.txt'):
+                with open(os.path.join(data_dir, filename), "r", encoding="utf-8") as file:
+                    doc = file.read()
+                    docs.append(doc)
     return docs
+# _______________________________________________________________________
 #_______________________________________________________________________
 
 
