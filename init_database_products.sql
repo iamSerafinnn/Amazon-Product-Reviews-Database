@@ -98,3 +98,18 @@ CREATE TABLE QueryLog_Product (
     FOREIGN KEY (query_id) REFERENCES QueryLog(query_id),
     FOREIGN KEY (product_id) REFERENCES Product(product_id)
 );
+
+
+CREATE EXTENSION IF NOT EXISTS vector;
+CREATE TABLE ProductEmbeddings (
+    embedding_id SERIAL PRIMARY KEY,
+    product_id INT UNIQUE REFERENCES Product(product_id) ON DELETE CASCADE,
+    description TEXT NOT NULL,
+    embedding vector(384) NOT NULL,   -- Because you're using all-MiniLM-L6-v2
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+
+CREATE INDEX idx_product_embeddings_hnsw
+ON ProductEmbeddings
+USING hnsw (embedding vector_cosine_ops);
