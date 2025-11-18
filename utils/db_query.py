@@ -131,3 +131,39 @@ def insert_product_with_embedding(engine, data, embedding_vector, product_id=1, 
         print(f"Failed to insert product {product_id}: {e}")
         # The transaction is automatically rolled back
 
+def search_products(engine, query_embedding, top_k=5):
+    if isinstance(query_embedding, np.ndarray):
+        query_embedding = query_embedding.tolist()
+
+    # Convert Python list to PostgreSQL array literal
+    pg_array = "ARRAY[" + ",".join(map(str, query_embedding)) + "]::vector"
+
+    search_query = f"""
+    SELECT product_id
+    FROM ProductEmbeddings
+    ORDER BY embedding <-> {pg_array}
+    LIMIT :top_k;
+    """
+
+    with engine.connect() as conn:
+        result = conn.execute(
+            text(search_query),
+            {"top_k": top_k}
+        )
+        product_ids = [row[0] for row in result]
+
+    return product_ids
+
+def get_product_title(engine, product_id):
+    query = """
+    SELECT title
+    FROM Product
+    WHERE product_id = :product_id;
+    """
+    with engine.connect() as conn:
+        result = conn.execute(text(query), {"product_id": product_id}).fetchone()
+        if result:
+            return result[0]
+        else:
+            return None
+
