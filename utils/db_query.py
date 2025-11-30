@@ -2,6 +2,11 @@ from sqlalchemy import text
 import json
 import numpy as np
 
+def run_command(engine, query, params=None):
+    with engine.connect() as conn:
+        conn.execute(text(query), params or {})
+        conn.commit()
+
 def add_prereq(engine, user_id: int, user_name: str, user_email: str,
                category_id: int, category_title: str):
     """
@@ -15,7 +20,7 @@ def add_prereq(engine, user_id: int, user_name: str, user_email: str,
     VALUES (:user_id, :name, :email)
     ON CONFLICT (user_id) DO NOTHING;
     """
-    run_command(insert_user_query, {"user_id": user_id, "name": user_name, "email": user_email})
+    run_command(engine, insert_user_query, {"user_id": user_id, "name": user_name, "email": user_email})
 
     # Insert category if not exists
     insert_category_query = """
@@ -23,7 +28,7 @@ def add_prereq(engine, user_id: int, user_name: str, user_email: str,
     VALUES (:category_id, :title)
     ON CONFLICT (category_id) DO NOTHING;
     """
-    run_command(insert_category_query, {"category_id": category_id, "title": category_title})
+    run_command(engine, insert_category_query, {"category_id": category_id, "title": category_title})
 
     print(f"Prerequisites ensured: user {user_id}, category {category_id}")
 
@@ -131,28 +136,64 @@ def insert_product_with_embedding(engine, data, embedding_vector, product_id=1, 
         print(f"Failed to insert product {product_id}: {e}")
         # The transaction is automatically rolled back
 
+import numpy as np
+from sqlalchemy import text
+
 def search_products(engine, query_embedding, top_k=5):
     if isinstance(query_embedding, np.ndarray):
-        query_embedding = query_embedding.tolist()
-
-    # Convert Python list to PostgreSQL array literal
-    pg_array = "ARRAY[" + ",".join(map(str, query_embedding)) + "]::vector"
-
-    search_query = f"""
-    SELECT product_id
-    FROM ProductEmbeddings
-    ORDER BY embedding <-> {pg_array}
-    LIMIT :top_k;
-    """
-
+        query_vec = query_embedding.astype(float)
+    else:
+        query_vec = np.array(query_embedding, dtype=float)
+    # Normalize query vector.
+    q_norm = np.linalg.norm(query_vec)
+    if q_norm == 0:
+        return []
+    query_vec = query_vec / q_norm
     with engine.connect() as conn:
-        result = conn.execute(
-            text(search_query),
-            {"top_k": top_k}
-        )
-        product_ids = [row[0] for row in result]
+        result = conn.execute(text("""
+            SELECT product_id, embedding
+            FROM productembeddings
+        """))
+        rows = result.fetchall()
 
-    return product_ids
+    if not rows:
+        return []
+
+    product_ids = []
+    emb_list = []
+
+    for row in rows:
+        pid = row[0]
+        emb = row[1]
+        if emb is None:
+            continue
+
+        emb_vec = np.array(emb, dtype=float)
+
+        # Skip mismatched dimensions
+        if emb_vec.shape[0] != query_vec.shape[0]:
+            continue
+
+        product_ids.append(pid)
+        emb_list.append(emb_vec)
+
+    if not emb_list:
+        return []
+
+    # Stack embeddings into a matrix.
+    emb_matrix = np.vstack(emb_list)
+    # Normalize each of thee embeddings.
+    norms = np.linalg.norm(emb_matrix, axis=1, keepdims=True)
+    norms[norms == 0] = 1.0
+    emb_matrix = emb_matrix / norms
+    # Find the similar ones through cosine.
+    similar = emb_matrix.dot(query_vec)
+    # Sort the ones that come back.
+    top_idx = np.argsort(-similar)[:top_k]
+    top_product_ids = [product_ids[i] for i in top_idx]
+
+    return top_product_ids
+
 
 def get_product_title(engine, product_id):
     query = """
@@ -166,4 +207,3 @@ def get_product_title(engine, product_id):
             return result[0]
         else:
             return None
-
