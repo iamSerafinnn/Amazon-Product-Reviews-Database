@@ -15,7 +15,7 @@ from utils.text import clean_text, text_to_paragraph_chunks, similar_idx
 from utils.db_query import add_prereq, insert_product_with_embedding, get_product_title, search_products
 
 # Database configuration
-DB_USER = 'postgres'           # your current macOS user / postgres role
+DB_USER = 'ali'           # your current macOS user / postgres role
 DB_PASSWORD = 'password'          # empty if no password
 DB_HOST = 'localhost'
 DB_PORT = '5432'
@@ -86,12 +86,25 @@ class ProductAnsweringSystem:
                 details JSONB
             );
             """,
+            # """
+            # CREATE TABLE IF NOT EXISTS productembeddings (
+            #     product_id INT PRIMARY KEY REFERENCES product(product_id),
+            #     description TEXT,
+            #     embedding DOUBLE PRECISION[]
+            # );
+            # """
+            "CREATE EXTENSION IF NOT EXISTS vector;",
             """
             CREATE TABLE IF NOT EXISTS productembeddings (
                 product_id INT PRIMARY KEY REFERENCES product(product_id),
                 description TEXT,
-                embedding DOUBLE PRECISION[]
+                embedding vector(384) NOT NULL
             );
+            """,
+            """
+            CREATE INDEX IF NOT EXISTS idx_product_embeddings_hnsw
+            ON productembeddings
+            USING hnsw (embedding vector_cosine_ops);
             """
         ]
 
@@ -700,7 +713,7 @@ class ProductAnsweringSystem:
             print("3. Search products")
             print("4. Admin/Curator functions")
             print("5. Logout" if self.current_user else "5. Exit")
-            print("6. Exit")
+            if self.current_user: print("6. Exit")
             
             choice = input("\nEnter your choice (1-6): ").strip()
             
