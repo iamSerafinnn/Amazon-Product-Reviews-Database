@@ -23,6 +23,11 @@ DB_NAME = 'products_database'
 
 #Our OpenAI Key, personal password for programmatic access to GPT models.
 OPENAI_KEY = "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"
+GPT_PROMPT = (
+    "You are a salesman. the user searched for {query}, "
+    "and the response from database is {title}. "
+    "Give a one sentence sales pitch for this product. Response:"
+)
 
 class ProductAnsweringSystem:
     def __init__(self):
@@ -608,7 +613,11 @@ class ProductAnsweringSystem:
             print(f"\n Found {len(results)} results:")
             for i, product_id in enumerate(results, 1):
                 title = get_product_title(self.engine, product_id)
+                
                 print(f"{i}. {title}")
+                gpt_desc = self.gpt41mini.prompt(GPT_PROMPT.format(query=query, title=title))[0]
+                print("Sales Assistant:", gpt_desc)
+                print()
         else:
             print(" No results found")
 
