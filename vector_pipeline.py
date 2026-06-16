@@ -1,58 +1,69 @@
-#vector_pipeline.py
-#CS 480 Project - Amazon Product Reviews Database - Phase 3) Vector Piepline
-
 #Required Files To Import For Vector Pipelining
 #_______________________________________________________________________
-#To Load Files And Output To It
 import os
 import json
-
-#Handling Numeric Arrays For Embeddings
 import numpy as np
 import pandas as pd
+import faiss.swigfaiss as faiss
 
-#Adding A Pre-Trained Embedding Model
 from sentence_transformers import SentenceTransformer
-
-#Helps Break Long Documents Into Text For Chunking Documents
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-
-#The Library FAISS Used For Building The Vector Index
-import faiss
-
-
+from backend import load_products_from_db, log_query
 #_______________________________________________________________________
 
 
 #Step 1) Loading Documents
-#Process of loading the files and reading them into a document
+#Process of loading the files and reading them into a products array
 #_______________________________________________________________________
 def load_documents(data_dir="data"):
-    docs = []
+
+    products = load_products_from_db()
+    product_docs, product_ids = [], []
+
+    # Load all the products from the database
+    if products:
+        for product in products:
+            product_docs.append(product["description"])
+            product_ids.append(product["product_id"])
+        print("Database has been filled!")
+        return product_docs, product_ids
+    else:
+        print("Database returned no rows.")
+    
+
+    # Retrieving data directory, the CSV we will be using
     csv_path = os.path.join(data_dir, "sample500.csv")
+    
     if os.path.exists(csv_path):
         try:
+            # Reading the csv file into a dataframe
             df = pd.read_csv(csv_path)
-            for desc in df['description']:
+
+            # Load all product ids and descriptions
+            for id, desc in enumerate(df['description']):
                 if isinstance(desc, str) and len(desc.strip()) > 0:
-                    docs.append(desc)
-            print(f"Loaded {len(docs)} documents from CSV")
+                    product_docs.append(desc)
+                    product_ids.append(id)
+            
+            print(f"Loaded {len(product_docs)} documents from CSV")
+
+        # Error Handling
         except Exception as e:
             print(f"Error reading CSV")
+        
     else:
-        # Fallback to original text file loading
-        docs = []
         #Access every file in the folder
-        for filename in os.listdir(data_dir):
+        for id, filename in enumerate(os.listdir(data_dir)):
+            
             #For every TEXT file in the folder ONLY, read the contents of the file
             #and store it inside a doc. Then, add that document to the list of
             #documents
             if filename.endswith('.txt'):
                 with open(os.path.join(data_dir, filename), "r", encoding="utf-8") as file:
-                    doc = file.read()
-                    docs.append(doc)
-    return docs
-# _______________________________________________________________________
+                    product_docs.append(file.read())
+                    product_ids.append(id)
+
+    return product_docs, product_ids
 #_______________________________________________________________________
 
 
@@ -60,24 +71,23 @@ def load_documents(data_dir="data"):
 #Process of accessing long text in documents and splitting those texts into what is
 #known as chunks
 #_______________________________________________________________________
-def chunk_documents(docs, chunk_size=512, chunk_overlap=50):
-    #Initializing a text splitter to split long text into smaller pieces by periods, commas, 
-    #or paragraphs cleanly
-    #RecursiveCharacterTextSplitters - LangChains Built In Helper To Split Texts Cleanly
+def chunk_documents(docs, ids, chunk_size=512, chunk_overlap=50):
+    # Text splitter to split long text into smaller pieces by periods, commas, or paragraphs cleanly
+    # RecursiveCharacterTextSplitters - LangChains Built In Helper To Split Texts Cleanly
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
 
-    #Constructing a list of chunks to store informations and return
-    chunks = []
+    # Arrays to store chunks
+    chunks_docs = []
+    chunks_ids = []
 
-    #Access every document and split the document text into a list of strings known as a chunk
-    #After successfully retrieving the chunk document, add it to the lists of chunks
-    #We use extend to add chunks to merge all texts into one list
-    for doc in docs:
+    # Get each chunk and extend them to the chunks lists
+    for doc, id in zip(docs, ids):
         chunk = text_splitter.split_text(doc)
-        chunks.extend(chunk)
+        chunks_docs.extend(chunk)
+        chunks_ids.extend([id] * len(chunk))
     
-    #Return the list of chunks
-    return chunks
+    # Return the resulting chunks
+    return chunks_docs, chunks_ids
 #_______________________________________________________________________
 
 
@@ -138,7 +148,7 @@ def build_index(embeddings):
 #Process of taking in a user query, convert that query into a high-dimensional vector, then use that vector
 #to find the most similar high-dimensional vectors in the FAISS index (Retrieval of Chunks In The FAISS Index)
 #_______________________________________________________________________
-def retrieve(query, model, index, chunks, k):
+def retrieve(query, model, index, chunks_docs, chunks_ids, k):
     #Convert the query into a high-dimensional vector using the same model we used to convert
     #chunks into high-dimensional vectors
     query_model = model.encode([query])
@@ -149,43 +159,53 @@ def retrieve(query, model, index, chunks, k):
 
     #Lastly, return and retrieved the corresponding models found to be the most similar
     #to that query model
-    return [chunks[i] for i in indices[0]]
+    return [(chunks_docs[i], chunks_ids[i]) for i in indices[0]]
 #_______________________________________________________________________
 
 
 #Main Code - Vector Pipelining of Amazon Reviews Database
 #_______________________________________________________________________
 if __name__ == "__main__":
+    #Creating an outputs folder first to store the outputs for future use
+    os.makedirs("outputs", exist_ok=True)
+
+    #Constructing the SentenceTransformer model to convert the query into
+    model = SentenceTransformer("all-MiniLM-L6-v2")
+
+    #__________  Process of Vector Pipelining In Databases ____________
+    #           Document → Chunking → Embedding → Indexing
+    product_docs, product_ids = load_documents()
+    chunks_docs, chunks_ids   = chunk_documents(product_docs, product_ids)
+    embeddings = embed_chunks(chunks_docs)
+    index = build_index(embeddings)
+    #___________________________________________________________________
+
     continueLoop = True
     while continueLoop:
-        #Creating an outputs folder first to store the outputs for future use
-        os.makedirs("outputs", exist_ok=True)
-
-        #Constructing the SentenceTransformer model to convert the query into
-        model = SentenceTransformer("all-MiniLM-L6-v2")
-
+        
         #Prompt the user to input a query
         query = input("Enter a query: ")
         number = int(input("Total Number of Results: "))
 
-        #__________  Process of Vector Pipelining In Databases ____________
-        #      Document → Chunking → Embedding → Indexing → Retrieval
-        documents = load_documents()
-        chunks = chunk_documents(documents)
-        embeddings = embed_chunks(chunks)
-        index = build_index(embeddings)
-        results = retrieve(query, model, index, chunks, number)
-        #___________________________________________________________________
+        # Retrieving the results
+        results = retrieve(query, model, index, chunks_docs, chunks_ids, number)
+
+        # Get all matching product IDs of the results
+        matched_ids = list({product_id for _, product_id in results})
+
+        # Insert all the maching product IDs into the database
+        log_query(1, query, matched_ids)
 
         #Printing the resulting models found to be the most similar to the query
         print("\n--- Most Similar Models Found ---")
-        for r in results:
-            print(r[:250], "...\n")
+        for chunk_text, pid in results:
+            print(f"[product_id={pid}] {chunk_text[:250]}...\n")
 
         #Search Again?
         choice = input("Do you wish to search again(y/n): ").lower()
         if choice == "y":
             continueLoop = True
         else:
+            "Okay. Bye!"
             continueLoop = False
 #_______________________________________________________________________
