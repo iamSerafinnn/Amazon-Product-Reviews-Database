@@ -13,6 +13,7 @@
 # pip install faiss-cpu
 # pip install fastapi uvicorn
 # 
+# source venv/bin/activate
 # uvicorn api:app --reload
 # 
 # psql postgres
@@ -25,10 +26,10 @@
 # python3 backend.py
 # python3 vector_pipeline.py
 # -----------------------------------------------------------------------
-# -----------------------------------------------------------------------
 # Needed Imports
 # -----------------------------------------------------------------------
 import psycopg2
+import math, decimal
 from psycopg2.extras import RealDictCursor
 from datetime import datetime
 # -----------------------------------------------------------------------
@@ -180,9 +181,25 @@ def get_product_by_id(product_id: int):
             cur.execute(query,(product_id,))
             row = cur.fetchone()
 
-            # Return the resulting row, else none if
-            # it is empty
-            return dict(row) if row else None
+            # Return none if no row exists
+            if not row:
+                return None
+            
+            # Make a dictionary of cleaned values, no infinite decimals o NaN Values
+            cleaned = {}
+
+            # Clean NaN values right here before returning (No infinite or NaN Values)
+            for k, v in dict(row).items():
+                if isinstance(v, float) and (math.isnan(v) or math.isinf(v)):
+                    cleaned[k] = None
+                elif isinstance(v, decimal.Decimal):
+                    f = float(v)
+                    cleaned[k] = None if (math.isnan(f) or math.isinf(f)) else f
+                else:
+                    cleaned[k] = v
+
+            # Return the cleaned values
+            return cleaned
         
     # Error handling
     except Exception as e:

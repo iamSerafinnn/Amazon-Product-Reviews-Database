@@ -1,0 +1,34 @@
+Functional gaps
+__________________________________________________________________________________________________
+No pagination (Added!)
+Right now you always get exactly k=10 results and that's it. 
+Pagination means showing results in pages — page 1 shows results 1-10, page 2 shows 11-20, etc.
+For a search engine this makes it feel more complete and professional.
+
+Clicking a card does nothing
+The product cards are just static display.
+A real search engine would let you click a card to see the full product details.
+All the features, full description, images, etc. That would use your GET /products/{id} endpoint
+which is already built but not connected to anything in the UI yet.
+
+Suggestion chips don't auto-submit (Added!)
+Covered this already, you said it works for you so probably fine.
+__________________________________________________________________________________________________
+
+Resume-worthy additions
+__________________________________________________________________________________________________
+GET /categories + filter
+Right now you can only search by text. Adding a category filter (Electronics, Cameras, etc.) would
+let users narrow results by category. It would add a new endpoint to api.py and a dropdown or filter
+chips to the React UI.
+
+Search history page
+You're already logging every query to QueryLog in PostgreSQL. A history page would just fetch those
+rows and display them — "what did users search for, and how many results did they get?" This shows
+you thought about analytics and observability, which is a real engineering concern.
+
+Better empty state
+When there are no results, right now it just says "No results found." A better
+design would suggest alternative searches, show popular queries from the query log, or give more
+helpful guidance.
+__________________________________________________________________________________________________

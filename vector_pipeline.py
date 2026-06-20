@@ -1,3 +1,7 @@
+
+# -----------------------------------------------------------------------
+# Vector Pipeline - The FAISS Index File
+# -----------------------------------------------------------------------
 #Required Files To Import For Vector Pipelining
 #_______________________________________________________________________
 import os
@@ -5,6 +9,7 @@ import json
 import numpy as np
 import pandas as pd
 import faiss.swigfaiss as faiss
+import torch
 
 from sentence_transformers import SentenceTransformer
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -121,7 +126,7 @@ def embed_chunks(chunks):
 #_______________________________________________________________________
 
 
-#Step 4) Building FAISS Index
+#Step 4) Building FAISS Index 
 #Process of building the FAISS index, the searchable syestem structure that stores embeddings
 #and allows fast searches of similar chunk_text based on a given query
 #_______________________________________________________________________
@@ -144,21 +149,32 @@ def build_index(embeddings):
 #_______________________________________________________________________
 
 
+# *******************************************************************************
+# RETRIEVE() ISN'T BEING USED, APPARENTLY IT IS CAUSING SEG FAULTS IN THE API
+# WHEN RETRIEVING ITEMS FROM THE DATABASE
+# *******************************************************************************
 #Step 5) Retrieving Chunks
 #Process of taking in a user query, convert that query into a high-dimensional vector, then use that vector
 #to find the most similar high-dimensional vectors in the FAISS index (Retrieval of Chunks In The FAISS Index)
 #_______________________________________________________________________
 def retrieve(query, model, index, chunks_docs, chunks_ids, k):
+    # Prevent threading conflict with uvicorn
+    torch.set_num_threads(1)
+
     #Convert the query into a high-dimensional vector using the same model we used to convert
     #chunks into high-dimensional vectors
+    print("Encoding query...")
     query_model = model.encode([query])
+    query_model = np.array(query_model).astype('float32')
 
     #After conversion, find the k most similar models to the query model in the FAISS index
     #where distance represents how similar they are and indices are the rows of those models
+    print("Query encoded, searching index...")
     distance, indices = index.search(query_model, k)
 
     #Lastly, return and retrieved the corresponding models found to be the most similar
     #to that query model
+    print("Search done")
     return [(chunks_docs[i], chunks_ids[i]) for i in indices[0]]
 #_______________________________________________________________________
 
