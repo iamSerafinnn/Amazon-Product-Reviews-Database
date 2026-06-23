@@ -405,5 +405,14 @@ body {
 @media (max-width: 600px) {
   .search-bar { flex-direction: column; }
   .results-grid { grid-template-columns: 1fr; }
+  .header-inner { padding: 0 16px; }
+  .brand-name { font-size: 16px; }
+  .search-section { margin: 24px auto 0; padding: 0 16px; }
+  .results-section { padding: 0 16px 100px; margin: 24px auto; }
+  .modal { padding: 20px; max-height: 85vh; }
+  .modal-title { font-size: 16px; padding-right: 32px; }
+  .bottom-bar { gap: 6px; padding: 10px 12px; }
+  .page-btn { padding: 8px 12px; font-size: 12px; }
+  .card { padding: 14px; }
 }
 /* _____________________________________________________________________ */
