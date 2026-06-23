@@ -1,0 +1,28 @@
+# macOS
+.DS_Store
+
+# Data folder
+/data/*.parquet
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
+*.egg-info/
+
+# SQL files
+*.sql
+*.dump
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# IDEs
+.vscode/
+.idea/
+EOL
