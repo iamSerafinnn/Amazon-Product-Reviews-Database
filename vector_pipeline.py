@@ -13,7 +13,7 @@ import torch
 
 from sentence_transformers import SentenceTransformer
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from backend import load_products_from_db, log_query
+from backend import load_products_from_db, log_query, get_product_by_id
 #_______________________________________________________________________
 
 
@@ -149,33 +149,49 @@ def build_index(embeddings):
 #_______________________________________________________________________
 
 
-# *******************************************************************************
-# RETRIEVE() ISN'T BEING USED, APPARENTLY IT IS CAUSING SEG FAULTS IN THE API
-# WHEN RETRIEVING ITEMS FROM THE DATABASE
-# *******************************************************************************
 #Step 5) Retrieving Chunks
 #Process of taking in a user query, convert that query into a high-dimensional vector, then use that vector
 #to find the most similar high-dimensional vectors in the FAISS index (Retrieval of Chunks In The FAISS Index)
 #_______________________________________________________________________
-def retrieve(query, model, index, chunks_docs, chunks_ids, k):
-    # Prevent threading conflict with uvicorn
+def retrieve(query, model, index, chunks_ids, k):
+    #Prevents threading conflict with uvicorn, like segfault or hanging,
+    #by forcing pyTorch, OpenMP, and FAISS to use only 1 thread
     torch.set_num_threads(1)
+    os.environ["OMP_NUM_THREADS"] = "1"
+    faiss.omp_set_num_threads(1)
 
-    #Convert the query into a high-dimensional vector using the same model we used to convert
-    #chunks into high-dimensional vectors
-    print("Encoding query...")
-    query_model = model.encode([query])
-    query_model = np.array(query_model).astype('float32')
+    # Converts the search quest text into a high-dimensional vector so FAISS
+    # can compare database items to the search query
+    query_vec = np.array(model.encode([query])).astype("float32")
 
-    #After conversion, find the k most similar models to the query model in the FAISS index
-    #where distance represents how similar they are and indices are the rows of those models
-    print("Query encoded, searching index...")
-    distance, indices = index.search(query_model, k)
+    # Search the index with the query vector
+    distances, indices = index.search(query_vec, k)
 
-    #Lastly, return and retrieved the corresponding models found to be the most similar
-    #to that query model
-    print("Search done")
-    return [(chunks_docs[i], chunks_ids[i]) for i in indices[0]]
+    # Stores the results and the seen IDs. Using set to prevent duplicates
+    seen = set()
+    results = []
+
+    # Searching the acquired indices
+    for distance, idx in zip(distances[0], indices[0]):
+
+        # If the distance to similarity is too far,
+        # just skip it
+        if distance > 2.0:
+            continue
+
+        # Retrieve the product IDs
+        pid = chunks_ids[idx]
+
+        # If the product ID hasn't been seen yet, get the product ID
+        # and store it in the results if it exists
+        if pid not in seen:
+            seen.add(pid)
+            product = get_product_by_id(pid)
+            if product:
+                results.append(product)
+
+    # Return the results
+    return results
 #_______________________________________________________________________
 
 

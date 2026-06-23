@@ -87,9 +87,8 @@ def fetch_category(cur, row, inserted_categories):
 # -----------------------------------------------------------------------
 
 
-
 # -----------------------------------------------------------------------
-# fetch_category() - Inserts a row's product attributes into the product
+# insert_product() - Inserts a row's product attributes into the product
 # table in the database. Also prevents duplicated ones.
 # -----------------------------------------------------------------------
 def insert_product(cur, inserted_products, title, description, price, average_rating, rating_number,

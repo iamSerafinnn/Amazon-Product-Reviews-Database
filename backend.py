@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------
-# Overview
+# The Backend of Amazon Product Reviews Database System
 # -----------------------------------------------------------------------
 # Handles PostgreSQL connection and all DB interactions for the FAISS pipeline.
 # Two responsibilities:
@@ -12,21 +12,16 @@
 # pip install langchain-text-splitters
 # pip install faiss-cpu
 # pip install fastapi uvicorn
-# 
 # source venv/bin/activate
 # uvicorn api:app --reload
-# 
 # psql postgres
 # \du
 # CREATE ROLE postgres WITH SUPERUSER LOGIN PASSWORD 'password.';
 # \q
 # psql -U postgres -f create_query.sql
-# 
 # python3 seed.py
 # python3 backend.py
 # python3 vector_pipeline.py
-# -----------------------------------------------------------------------
-# Needed Imports
 # -----------------------------------------------------------------------
 import psycopg2
 import math, decimal

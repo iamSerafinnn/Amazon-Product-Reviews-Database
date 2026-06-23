@@ -30,8 +30,10 @@ function StarRating({ rating }) {
 // in dictionary of product storing its values
 // -----------------------------------------------------------------------
 function ProductCard({ product, onClick }) {
-  const imgUrl = extractImage(product.images)
+  // Extract the image of the product
+  const imgUrl = ExtractImage(product.images)
 
+  // Returning the product UI design
   return (
     <div className="card" onClick={onClick} style={{cursor: 'pointer'}}>
       <div className="card-header">
@@ -45,13 +47,14 @@ function ProductCard({ product, onClick }) {
         )}
       </div>
 
-      {imgUrl && (
-        <img
-          src={imgUrl}
-          alt={product.title}
-          style={{ width: '100%', height: '180px', objectFit: 'contain', borderRadius: '6px', marginBottom: '8px', background: '#f9fafb' }}
-        />
-      )}
+        {/* Image of Product */}
+        {imgUrl && (
+          <img
+            src={imgUrl}
+            alt={product.title}
+            style={{ width: '100%', height: '180px', objectFit: 'contain', borderRadius: '6px', marginBottom: '8px', background: '#f9fafb' }}
+          />)
+        }
 
       {/* Product Name and Description  */}
       <h3 className="card-title">{product.title}</h3>
@@ -73,26 +76,42 @@ function ProductCard({ product, onClick }) {
 }
 
 
-function extractImage(images) {
+// -----------------------------------------------------------------------
+// ExtractImage() - Extract the image from a passed in image URL
+// -----------------------------------------------------------------------
+function ExtractImage(images) {
+  // If image url is empty, return nothing
   if (!images) return null
+  
   try {
+    // Normalized the data. If images is already a JS object, use it as-is. 
+    // If it's a string, parse it in a valid JS object.
     const normalized = typeof images === 'object'
       ? images
       : JSON.parse(images.replace(/'/g, '"').replace(/array\(\[/g, '[').replace(/\],\s*dtype=object\)/g, ']'))
+    
+    // Return the normalized image JS object.
     return normalized?.large?.[0] || normalized?.hi_res?.[0] || normalized?.thumb?.[0] || null
+  
+  // Error handling
   } catch {
     return null
   }
 }
 
-function cleanText(text) {
+
+// -----------------------------------------------------------------------
+// CleanText() - Cleans a passed in text by removing unecessary chars 
+// and polishing it. Used to make clean product descriptions and text
+// -----------------------------------------------------------------------
+function CleanText(text) {
   if (!text) return ''
   return text
-    .replace(/\[|\]/g, '')           // remove brackets
-    .replace(/'([^']*?)'\s*'/g, '$1 ') // remove repeated quoted items
-    .replace(/'\s*'/g, ' ')           // remove adjacent quotes
-    .replace(/^'|'$/g, '')            // remove leading/trailing quotes
-    .replace(/\s+/g, ' ')             // collapse spaces
+    .replace(/\[|\]/g, '')              // remove brackets
+    .replace(/'([^']*?)'\s*'/g, '$1 ')  // remove repeated quoted items
+    .replace(/'\s*'/g, ' ')             // remove adjacent quotes
+    .replace(/^'|'$/g, '')              // remove leading/trailing quotes
+    .replace(/\s+/g, ' ')               // collapse spaces
     .trim()
 }
 
@@ -105,9 +124,10 @@ function App() {
 
   // The state variables - When one of these variables changes
   // the react UI app changes
-  // _____________________________________________
+  // ------------------------------------------------------------
   const [query, setQuery] = useState('') 
   const [page, setPage] = useState(1)
+  const [erTab, setERTab] = useState(1)
 
   const [results, setResults] = useState([])
   const [allResults, setAllResults] = useState([])
@@ -119,11 +139,14 @@ function App() {
   const [searched, setSearched] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const [modalLoading, setModalLoading] = useState(false)
-  // _____________________________________________
+  const [showER, setShowER] = useState(false)
+  const [showOverview, setShowOverview] = useState(false)
+  // ------------------------------------------------------------
 
 
   // ------------------------------------------------------------
-  // handlePage() -
+  // handlePage() - Handles navigating the pagination of the
+  // search results.
   // ------------------------------------------------------------
   function handlePage(newPage) {
 
@@ -140,22 +163,30 @@ function App() {
 
 
   // ------------------------------------------------------------
-  // handleCardClick() -
+  // handleCardClick() - Handles the card clicking for the product
+  // cards and creates a detailed modal out of it.
   // ------------------------------------------------------------
   async function handleCardClick(product_ID) {
+    // Initialized the modal and product states
     setModalLoading(true)
     setSelectedProduct(null)
 
+    // Loads product
     try {
-
+      // Sends a get request to api.py and awaits response
       const res = await fetch(`${API_URL}/products/${product_ID}`)
+
+      // Parses the product from the response into a JS object
       const data = await res.json()
 
+      // Updates the selected product states
       setSelectedProduct(data)
 
+    // Error Handling
     } catch (e) {
       console.error('Failed to load product: ', e)
 
+    // Updates the modal loading state
     } finally {
       setModalLoading(false)
     }
@@ -224,11 +255,11 @@ function App() {
           {/* Header Title */}
           <div className="brand">
             <span className="brand-icon">◈</span>
-            <span className="brand-name">EpicCode Amazon Product Database</span>
+            <span className="brand-name">EpicCode Amazon Product Database System</span>
           </div>
 
           {/* Header Sub-Text */}
-          <p className="brand-sub">Semantic search over Amazon product reviews</p>
+          <p className="brand-sub">Query semantic search over Amazon product reviews</p>
           
         </div>
       </header>
@@ -311,12 +342,15 @@ function App() {
 
             {/* Product Pagination */}
             <div className="pagination">
+
+              {/* Previous Button */}
               {page > 1 && (
                 <button className="page-btn" onClick={() => handlePage(page - 1)}>
                   ← Previous
                 </button>
               )}
-              {/* Next Button (Has More) */}
+              
+              {/* Next Button */}
               {hasMore && (
                 <button className="page-btn" onClick={() => handlePage(page + 1)}>
                   Next →
@@ -332,7 +366,7 @@ function App() {
           <div className="empty-state">
             <p>Enter a search term to find products using semantic search.</p>
             <div className="suggestions">
-              {['wireless headphones', 'gaming laptop', 'smart TV', '4K camera'].map(s => (
+              {['headphones', 'laptop', 'TV', 'camera', 'phone', 'speaker'].map(s => (
                 <button
                   key={s}
                   className="suggestion-chip"
@@ -351,101 +385,188 @@ function App() {
         <div className="modal-overlay" onClick={() => setSelectedProduct(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
 
+            {/* Modal Loading Screen */}
             {modalLoading && <div className="modal-loading">Loading...</div>}
       
+            {/* Modal of Selected Product */}
             {selectedProduct && (
               <>
-                <button className="modal-close" onClick={() => setSelectedProduct(null)}>✕</button>
+              {/* Modal Border Styling */}
+              <hr style={{ border: 'none', borderTop: '1px solid #7b7c7dff', margin: '16px 0' }} />
+
+              {/* Modal X Close Button */}
+              <button className="modal-close" onClick={() => setSelectedProduct(null)}>✕</button>
                 
-                <div className="modal-header">
-                  <span className="store-tag">{selectedProduct.store || 'Unknown Store'}</span>
-                  {selectedProduct.price && (
-                    <span className="price">${parseFloat(selectedProduct.price).toFixed(2)}</span>
-                  )}
+              {/* Modal Header: Store and Price Tags */}
+              <div className="modal-header">
+                <span className="store-tag">{selectedProduct.store || 'Unknown Store'}</span>
+                {selectedProduct.price && (
+                  <span className="price">${parseFloat(selectedProduct.price).toFixed(2)}</span>
+                )}
+              </div>
+
+              {/* Modal Product Title */}
+              <h2 className="modal-title">{selectedProduct.title}</h2>
+
+              {/* Modal Product Image */}
+              {(() => {
+                const imgUrl = ExtractImage(selectedProduct.images)
+                return imgUrl ? (
+                  <img
+                    src={imgUrl}
+                    alt={selectedProduct.title}
+                    style={{ width: '100%', maxHeight: '280px', objectFit: 'contain', borderRadius: '8px', margin: '12px 0', background: '#f9fafb' }}
+                  />
+                ) : null
+              })()}
+
+              {/* Modal Product Rating and Reviews */}
+              {selectedProduct.average_rating && (
+                <div className="modal-rating">
+                  <StarRating rating={selectedProduct.average_rating} />
+                  <span className="review-count">
+                    {selectedProduct.rating_number?.toLocaleString()} reviews
+                  </span>
                 </div>
-
-                <h2 className="modal-title">{selectedProduct.title}</h2>
-
-                {(() => {
-                  const imgUrl = extractImage(selectedProduct.images)
-                  return imgUrl ? (
-                    <img
-                      src={imgUrl}
-                      alt={selectedProduct.title}
-                      style={{ width: '100%', maxHeight: '280px', objectFit: 'contain', borderRadius: '8px', margin: '12px 0', background: '#f9fafb' }}
-                    />
-                  ) : null
-                })()}
-
-                {selectedProduct.average_rating && (
-                  <div className="modal-rating">
-                    <StarRating rating={selectedProduct.average_rating} />
-                    <span className="review-count">
-                      {selectedProduct.rating_number?.toLocaleString()} reviews
-                    </span>
-                  </div>
-                )}
-
-                <hr style={{ border: 'none', borderTop: '1px solid #7b7c7dff', margin: '16px 0' }} />
-
-                {selectedProduct.description && (
-                  <div className="modal-section">
-                    <h4>Description</h4>
-                    <p>{cleanText(selectedProduct.description)}</p>
-                  </div>
-                )}
-
-                <hr style={{ border: 'none', borderTop: '1px solid #7b7c7dff', margin: '16px 0' }} />
-
-                {selectedProduct.features && (
-                  <div className="modal-section">
-                    <h4>Features</h4>
-                    <p>{cleanText(selectedProduct.features)}</p>
-                  </div>
-                )}
-
-                <hr style={{ border: 'none', borderTop: '1px solid #7b7c7dff', margin: '16px 0' }} />
-
-                {selectedProduct.details && (
-                  <div className="modal-section">
-                    <h4>Details</h4>
-                    {(() => {
-                      try {
-                        const raw = typeof selectedProduct.details === 'string'
-                          ? selectedProduct.details
-                          : JSON.stringify(selectedProduct.details)
-                        // Handle Python-style dict strings (single quotes, True/False/None)
-                        const normalized = raw
-                          .replace(/'/g, '"')
-                          .replace(/True/g, 'true')
-                          .replace(/False/g, 'false')
-                          .replace(/None/g, 'null')
-                        const parsed = JSON.parse(normalized)
-                        return (
-                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-                            <tbody>
-                              {Object.entries(parsed).map(([key, val]) => (
-                                <tr key={key} style={{ borderBottom: '1px solid #626363ff' }}>
-                                  <td style={{ padding: '6px 12px 6px 0', fontWeight: 600, whiteSpace: 'nowrap', verticalAlign: 'top', color: '#6b7280' }}>
-                                    {key}
-                                  </td>
-                                  <td style={{ padding: '6px 0', verticalAlign: 'top', color: 'var(--muted)', fontSize: '0.875rem' }}>
-                                    {String(val)}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        )
-                      } catch {
-                        // Fallback if parsing fails
-                        return <p>{cleanText(selectedProduct.details).replace(/[{}]|\s+/g, ' ').trim()}</p>
-                      }
-                    })()}
-                  </div>
               )}
-              </>
+
+              {/* Modal Product Description */}
+              {selectedProduct.description && (
+                <div className="modal-section">
+                  <h4>Description</h4>
+                  <p>{CleanText(selectedProduct.description)}</p>
+                </div>
+              )}
+
+              {/* Modal Product Features */}
+              {selectedProduct.features && (
+                <div className="modal-section">
+                  <h4>Features</h4>
+                  <p>{CleanText(selectedProduct.features)}</p>
+                </div>
+              )}
+
+              {/* Modal Product Details */}
+              {selectedProduct.details && (
+                <div className="modal-section">
+                  <h4>Details</h4>
+                  {(() => {
+                    try {
+                      const raw = typeof selectedProduct.details === 'string'
+                        ? selectedProduct.details
+                        : JSON.stringify(selectedProduct.details)
+                      // Details Normalized Text
+                      // Handle Python-style dict strings (single quotes, True/False/None)
+                      const normalized = raw
+                        .replace(/'/g, '"')
+                        .replace(/True/g, 'true')
+                        .replace(/False/g, 'false')
+                        .replace(/None/g, 'null')
+                      const parsed = JSON.parse(normalized)
+                      return (
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+                          <tbody>
+                            {Object.entries(parsed).map(([key, val]) => (
+                              <tr key={key} style={{ borderBottom: '1px solid #626363ff' }}>
+                                <td style={{ padding: '6px 12px 6px 0', fontWeight: 600, whiteSpace: 'nowrap', verticalAlign: 'top', color: '#6b7280' }}>
+                                  {key}
+                                </td>
+                                <td style={{ padding: '6px 0', verticalAlign: 'top', color: 'var(--muted)', fontSize: '0.875rem' }}>
+                                  {String(val)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )
+                    } catch {
+                      // Fallback if parsing fails
+                      return <p>{CleanText(selectedProduct.details).replace(/[{}]|\s+/g, ' ').trim()}</p>
+                    }
+                  })()}
+                </div>
             )}
+            </>
+          )}
+        </div>
+      </div>
+      )}
+
+      {/* Fixed Bottom Bar */}
+      <div className="bottom-bar">
+        <button className="page-btn" onClick={() => setShowER(true)}>ER Diagram</button>
+        <button className="page-btn" onClick={() => setShowOverview(true)}>Project Overview</button>
+        <button className="page-btn" onClick={() => window.open('https://github.com/iamSerafinnn/Amazon-Product-Reviews-Database')}>GitHub Repo</button>
+        <button className="page-btn" onClick={() => window.open('https://iamserafinnn.github.io/')}>My Portfolio</button>
+      </div>
+
+      {/* ER Diagram Modal */}
+      {showER && (
+        <div className="modal-overlay" onClick={() => setShowER(false)}>
+          <div className="modal" style={{ maxWidth: '90vw', width: '90vw', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowER(false)}>✕</button>
+            <h2 className="modal-title">ER Diagram</h2>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+              <button className="page-btn" onClick={() => setERTab(1)}>Query ER Diagram</button>
+              <button className="page-btn" onClick={() => setERTab(2)}>Database ER Diagram</button>
+            </div>
+            {erTab === 1 && <iframe src="/Amazon-Product-Reviews-Database/diagram.pdf" width="100%" height="800px" />}
+            {erTab === 2 && <iframe src="/Amazon-Product-Reviews-Database/diagram2.pdf" width="100%" height="800px" />}
+          </div>
+        </div>
+      )}
+
+      {/* Overview Modal */}
+      {showOverview && (
+        <div className="modal-overlay" onClick={() => setShowOverview(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowOverview(false)}>✕</button>
+            <h2 className="modal-title">Project Overview</h2>
+            <div className="modal-section" style={{textAlign: 'left'}}>
+
+              <hr style={{ border: 'none', borderTop: '1px solid #7b7c7dff', margin: '16px 0' }} />
+              
+              <h4>What did I build in this project?</h4>
+              <p>
+                This is a full-stack development of a semantic search query database of a dataset containing
+                Amazon products along with their descriptions, prices, stores, and features of each product.
+                This project is an implementation of an FAISS index database that converts raw JSON chunks
+                and the user's input query into vector embeddings. It finds the most relevant products by
+                returning the most similar embeddings of the input query to items in that database.
+              </p>
+
+              <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '16px 0' }} />
+
+              <h4>How does my project work?</h4>
+              <p>
+                Product descriptions are just raw JSON text, then they are chunked, and are then converted
+                into high-dimensional vectors using a SentenceTransformer model. Once converted, these 
+                vector embeddings are stored in a FAISS, Facebook AI Similarity Search, index. These are
+                optimized data structures that are used to store vector embeddings efficiently at a large
+                scale. So, when you search in that text box, that search query is then converted into a 
+                vector embedding as well and the FAISS index will find the closes matching products to that
+                query.
+
+                Importantly, I used a FastAPI, a high performing python web framework that translates incoming
+                HTTP request from backend to frontend into actionable events. This is how I manage to allow
+                communication between the backend and frontend part of this program.
+              </p>
+
+              <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '16px 0' }} />
+
+              <h4>Tech Stack / What was used?</h4>
+              <p>
+                Frontend: React, CSS <br></br>
+                Backend: Python, SQL <br></br>
+                Important Frameworks: FASTAPI, FAISS, SentenceTransformers, PostgreSQL <br></br>
+                Version Control: GitHub <br></br>
+                Development IDE: Visual Studios Code <br></br>
+                Database Size: 500 Amazon products stored with ratings, images, pricing, and metadata. <br></br>
+              </p>
+
+              <hr style={{ border: 'none', borderTop: '1px solid #7b7c7dff', margin: '16px 0' }} />
+              
+            </div>
           </div>
         </div>
       )}

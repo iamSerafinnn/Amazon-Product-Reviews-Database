@@ -1,3 +1,6 @@
+# ***********************************************************************
+# THIS ISN'T USED ANYMORE, RETRIEVE() FUNCTION HAS BEEN RESOLVED!
+# ***********************************************************************
 # -----------------------------------------------------------------------
 # Search Worker - The Script To Retrieve Chunks From The Database
 # A replacement of the retrieve() function in the vector pipeline file
@@ -102,5 +105,6 @@ for chunk_text, product_id in results:
             "store": product["store"],
         })
 
+# Printing the response to the terminal
 print(json.dumps(response))
 # -----------------------------------------------------------------------

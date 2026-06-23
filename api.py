@@ -3,6 +3,7 @@
 # -----------------------------------------------------------------------
 # FastAPI layer that exposes the FAISS vector pipeline as HTTP endpoints.
 # Builds the FAISS index once on startup, then serves search requests.
+# Initiates communication between the backend and the frontend.
 # -----------------------------------------------------------------------
 # Install dependencies:
 #   pip install fastapi uvicorn
@@ -133,19 +134,11 @@ async def search(request: SearchRequest):
     if not request.query.strip():
         raise HTTPException(status_code=400, detail="Query cannot be empty.")
 
-    # Run search in a separate process to avoid FAISS segfault
-    result = subprocess.run(
-        [sys.executable, "search_worker.py", request.query, str(request.k)],
-        capture_output=True, text=True
+    # Search through the index with the input query and retrieve the results.
+    # Prevent blocking the main thread and Uvicron, with await run_in_threadpool.
+    results = await run_in_threadpool(
+        retrieve, request.query, model, faiss_index, chunks_ids, request.k
     )
-
-    # Error handling
-    if result.returncode != 0:
-        print("WORKER ERROR:", result.stderr)
-        raise HTTPException(status_code=500, detail="Search failed.")
-
-    # Converts results to python list of dicts
-    results = json.loads(result.stdout)
 
     # Gets all product ids from results
     matched_ids = list({r["product_id"] for r in results})
@@ -153,6 +146,7 @@ async def search(request: SearchRequest):
     # Logs the search query and all product ids
     log_query(request.user_id, request.query, matched_ids)
 
+    # Return the results and the inputted query
     return {"query": request.query, "results": results}
 # -----------------------------------------------------------------------
 
