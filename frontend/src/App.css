@@ -425,7 +425,8 @@ body {
     padding-bottom: calc(12px + env(safe-area-inset-bottom));}
   .modal-overlay { 
     padding: 12px; 
-    align-items: flex-end; }
+    align-items: flex-end;
+    z-index: 2000; }
   .modal { 
     padding: 16px; 
     max-height: 90vh; 
