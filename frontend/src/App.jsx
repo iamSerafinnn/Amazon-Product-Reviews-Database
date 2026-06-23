@@ -395,7 +395,7 @@ function App() {
               <hr style={{ border: 'none', borderTop: '1px solid #7b7c7dff', margin: '16px 0' }} />
 
               {/* Modal X Close Button */}
-              <button className="modal-close" onClick={() => setSelectedProduct(null)}>✕</button>
+              <button className="modal-close" style={{ top: 'auto', bottom: '16px', right: '16px' }} onClick={() => setSelectedProduct(null)}>✕</button>
                 
               {/* Modal Header: Store and Price Tags */}
               <div className="modal-header">
