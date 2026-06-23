@@ -39,7 +39,7 @@ DB_CONFIG = {
     "port":     15026,
     "dbname":   "railway",
     "user":     "postgres",
-    "password": "password.",
+    "password": "gmQKUZTlgvsJFwPtVSkpQmOGndWYsJqt",
 }
 # -----------------------------------------------------------------------
 
