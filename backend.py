@@ -35,8 +35,8 @@ from datetime import datetime
 # -----------------------------------------------------------------------
 DATABASE_URL = "postgresql://postgres:xxxxxxxx@mainline.proxy.rlwy.net:PORT/railway"
 DB_CONFIG = {
-    "host":     "localhost",
-    "port":     5432,
+    "host":     "mainline.proxy.rlwy.net",
+    "port":     15026,
     "dbname":   "railway",
     "user":     "postgres",
     "password": "password.",
