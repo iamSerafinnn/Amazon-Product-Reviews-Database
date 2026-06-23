@@ -8,6 +8,7 @@
 # Install dependencies:
 #   pip install fastapi uvicorn
 # Run:
+#   pkill -f uvicorn
 #   uvicorn api:app --reload
 # -----------------------------------------------------------------------
 from fastapi import FastAPI, HTTPException
