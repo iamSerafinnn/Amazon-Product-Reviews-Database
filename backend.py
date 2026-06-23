@@ -33,10 +33,11 @@ from datetime import datetime
 # -----------------------------------------------------------------------
 # Configuration — PostgreSQL Credentials to execute SQL Queries
 # -----------------------------------------------------------------------
+DATABASE_URL = "postgresql://postgres:xxxxxxxx@mainline.proxy.rlwy.net:PORT/railway"
 DB_CONFIG = {
     "host":     "localhost",
     "port":     5432,
-    "dbname":   "products_database",
+    "dbname":   "railway",
     "user":     "postgres",
     "password": "password.",
 }

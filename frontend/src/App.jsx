@@ -559,7 +559,7 @@ function App() {
                 Frontend: React, CSS <br></br>
                 Backend: Python, SQL <br></br>
                 Important Frameworks: FASTAPI, FAISS, SentenceTransformers, PostgreSQL <br></br>
-                Version Control: GitHub <br></br>
+                Version Control: Git/GitHub <br></br>
                 Development IDE: Visual Studios Code <br></br>
                 Database Size: 500 Amazon products stored with ratings, images, pricing, and metadata. <br></br>
               </p>
