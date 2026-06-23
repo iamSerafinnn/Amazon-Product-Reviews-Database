@@ -427,6 +427,7 @@ body {
     padding: 12px; 
     align-items: flex-end; }
   .modal { 
+    padding-top: calc(16px + env(safe-area-inset-top));
     padding: 16px; 
     max-height: 90vh; 
     width: 100%; 
