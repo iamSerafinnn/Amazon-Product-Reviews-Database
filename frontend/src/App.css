@@ -407,14 +407,33 @@ body {
   .results-grid { grid-template-columns: 1fr; }
   .header-inner { padding: 0 16px; }
   .brand-name { font-size: 16px; }
-  .search-section { margin: 24px auto 0; padding: 0 16px; }
-  .results-section { padding: 0 16px 100px; margin: 24px auto; }
+  .search-section {
+    margin: 24px auto 0;
+    padding: 0 16px; }
+  .results-section { 
+    padding: 0 16px 100px;
+    margin: 24px auto; }
   .card { padding: 14px; }
-  .bottom-bar { flex-wrap: wrap; gap: 6px; padding: 8px; }
-  .bottom-bar .page-btn { flex: 1 1 calc(50% - 6px); font-size: 11px; padding: 8px 6px; text-align: center; }
-  .modal-overlay { padding: 12px; align-items: flex-end; }
-  .modal { padding: 16px; max-height: 90vh; width: 100%; border-radius: 8px; }
-  .modal-title { font-size: 15px; padding-right: 28px; }
+  .bottom-bar { 
+    flex-wrap: wrap; 
+    gap: 6px; 
+    padding: 8px; }
+  .bottom-bar .page-btn { 
+    flex: 1 1 calc(50% - 6px); 
+    font-size: 11px; padding: 8px 6px; 
+    text-align: center; 
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));}
+  .modal-overlay { 
+    padding: 12px; 
+    align-items: flex-end; }
+  .modal { 
+    padding: 16px; 
+    max-height: 90vh; 
+    width: 100%; 
+    border-radius: 8px; }
+  .modal-title { 
+    font-size: 15px; 
+    padding-right: 28px; }
   .modal-section p { font-size: 13px; }
   .modal-section h4 { font-size: 10px; }
   .modal img { max-height: 180px; }
