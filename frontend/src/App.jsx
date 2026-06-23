@@ -30,6 +30,8 @@ function StarRating({ rating }) {
 // in dictionary of product storing its values
 // -----------------------------------------------------------------------
 function ProductCard({ product, onClick }) {
+  const imgUrl = extractImage(product.images)
+
   return (
     <div className="card" onClick={onClick} style={{cursor: 'pointer'}}>
       <div className="card-header">
@@ -42,6 +44,14 @@ function ProductCard({ product, onClick }) {
           <span className="price">${parseFloat(product.price).toFixed(2)}</span>
         )}
       </div>
+
+      {imgUrl && (
+        <img
+          src={imgUrl}
+          alt={product.title}
+          style={{ width: '100%', height: '180px', objectFit: 'contain', borderRadius: '6px', marginBottom: '8px', background: '#f9fafb' }}
+        />
+      )}
 
       {/* Product Name and Description  */}
       <h3 className="card-title">{product.title}</h3>
@@ -60,6 +70,30 @@ function ProductCard({ product, onClick }) {
       </div>
     </div>
   )
+}
+
+
+function extractImage(images) {
+  if (!images) return null
+  try {
+    const normalized = typeof images === 'object'
+      ? images
+      : JSON.parse(images.replace(/'/g, '"').replace(/array\(\[/g, '[').replace(/\],\s*dtype=object\)/g, ']'))
+    return normalized?.large?.[0] || normalized?.hi_res?.[0] || normalized?.thumb?.[0] || null
+  } catch {
+    return null
+  }
+}
+
+function cleanText(text) {
+  if (!text) return ''
+  return text
+    .replace(/\[|\]/g, '')           // remove brackets
+    .replace(/'([^']*?)'\s*'/g, '$1 ') // remove repeated quoted items
+    .replace(/'\s*'/g, ' ')           // remove adjacent quotes
+    .replace(/^'|'$/g, '')            // remove leading/trailing quotes
+    .replace(/\s+/g, ' ')             // collapse spaces
+    .trim()
 }
 
 
@@ -332,6 +366,17 @@ function App() {
 
                 <h2 className="modal-title">{selectedProduct.title}</h2>
 
+                {(() => {
+                  const imgUrl = extractImage(selectedProduct.images)
+                  return imgUrl ? (
+                    <img
+                      src={imgUrl}
+                      alt={selectedProduct.title}
+                      style={{ width: '100%', maxHeight: '280px', objectFit: 'contain', borderRadius: '8px', margin: '12px 0', background: '#f9fafb' }}
+                    />
+                  ) : null
+                })()}
+
                 {selectedProduct.average_rating && (
                   <div className="modal-rating">
                     <StarRating rating={selectedProduct.average_rating} />
@@ -341,26 +386,64 @@ function App() {
                   </div>
                 )}
 
+                <hr style={{ border: 'none', borderTop: '1px solid #7b7c7dff', margin: '16px 0' }} />
+
                 {selectedProduct.description && (
                   <div className="modal-section">
                     <h4>Description</h4>
-                    <p>{selectedProduct.description}</p>
+                    <p>{cleanText(selectedProduct.description)}</p>
                   </div>
                 )}
+
+                <hr style={{ border: 'none', borderTop: '1px solid #7b7c7dff', margin: '16px 0' }} />
 
                 {selectedProduct.features && (
                   <div className="modal-section">
                     <h4>Features</h4>
-                    <p>{selectedProduct.features}</p>
+                    <p>{cleanText(selectedProduct.features)}</p>
                   </div>
                 )}
+
+                <hr style={{ border: 'none', borderTop: '1px solid #7b7c7dff', margin: '16px 0' }} />
 
                 {selectedProduct.details && (
                   <div className="modal-section">
                     <h4>Details</h4>
-                    <p>{selectedProduct.details}</p>
+                    {(() => {
+                      try {
+                        const raw = typeof selectedProduct.details === 'string'
+                          ? selectedProduct.details
+                          : JSON.stringify(selectedProduct.details)
+                        // Handle Python-style dict strings (single quotes, True/False/None)
+                        const normalized = raw
+                          .replace(/'/g, '"')
+                          .replace(/True/g, 'true')
+                          .replace(/False/g, 'false')
+                          .replace(/None/g, 'null')
+                        const parsed = JSON.parse(normalized)
+                        return (
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+                            <tbody>
+                              {Object.entries(parsed).map(([key, val]) => (
+                                <tr key={key} style={{ borderBottom: '1px solid #626363ff' }}>
+                                  <td style={{ padding: '6px 12px 6px 0', fontWeight: 600, whiteSpace: 'nowrap', verticalAlign: 'top', color: '#6b7280' }}>
+                                    {key}
+                                  </td>
+                                  <td style={{ padding: '6px 0', verticalAlign: 'top', color: 'var(--muted)', fontSize: '0.875rem' }}>
+                                    {String(val)}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )
+                      } catch {
+                        // Fallback if parsing fails
+                        return <p>{cleanText(selectedProduct.details).replace(/[{}]|\s+/g, ' ').trim()}</p>
+                      }
+                    })()}
                   </div>
-                )}
+              )}
               </>
             )}
           </div>
