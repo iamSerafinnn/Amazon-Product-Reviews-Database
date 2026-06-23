@@ -409,10 +409,15 @@ body {
   .brand-name { font-size: 16px; }
   .search-section { margin: 24px auto 0; padding: 0 16px; }
   .results-section { padding: 0 16px 100px; margin: 24px auto; }
-  .modal { padding: 20px; max-height: 85vh; }
-  .modal-title { font-size: 16px; padding-right: 32px; }
-  .bottom-bar { gap: 6px; padding: 10px 12px; }
-  .page-btn { padding: 8px 12px; font-size: 12px; }
   .card { padding: 14px; }
+  .bottom-bar { flex-wrap: wrap; gap: 6px; padding: 8px; }
+  .bottom-bar .page-btn { flex: 1 1 calc(50% - 6px); font-size: 11px; padding: 8px 6px; text-align: center; }
+  .modal-overlay { padding: 12px; align-items: flex-end; }
+  .modal { padding: 16px; max-height: 90vh; width: 100%; border-radius: 8px; }
+  .modal-title { font-size: 15px; padding-right: 28px; }
+  .modal-section p { font-size: 13px; }
+  .modal-section h4 { font-size: 10px; }
+  .modal img { max-height: 180px; }
+  .modal table { font-size: 12px; }
 }
 /* _____________________________________________________________________ */
