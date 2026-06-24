@@ -19,12 +19,19 @@ import os
 # DB_CONFIG must match backend.py DB_CONFIG exactly
 # -----------------------------------------------------------------------
 DB_CONFIG = {
-    "host":     "localhost",
-    "port":     5432,
-    "dbname":   "products_database",
-    "user":     "postgres",
-    "password": "password.",
+    "host":     os.environ.get("PGHOST", "mainline.proxy.rlwy.net"),
+    "port":     int(os.environ.get("PGPORT", 15026)),
+    "dbname":   os.environ.get("PGDATABASE", "railway"),
+    "user":     os.environ.get("PGUSER", "postgres"),
+    "password": os.environ.get("PGPASSWORD", "gmQKUZTlgvsJFwPtVSkpQmOGndWYsJqt"),
 }
+# DB_CONFIG = {
+#     "host":     "localhost",
+#     "port":     5432,
+#     "dbname":   "products_database",
+#     "user":     "postgres",
+#     "password": "password.",
+# }
 # -----------------------------------------------------------------------
 # This is the CSV file data we are using
 # -----------------------------------------------------------------------
