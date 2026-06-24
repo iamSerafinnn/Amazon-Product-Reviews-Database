@@ -25,6 +25,7 @@
 # -----------------------------------------------------------------------
 import psycopg2
 import math, decimal
+import os
 from psycopg2.extras import RealDictCursor
 from datetime import datetime
 # -----------------------------------------------------------------------
@@ -35,11 +36,11 @@ from datetime import datetime
 # -----------------------------------------------------------------------
 DATABASE_URL = "postgresql://postgres:xxxxxxxx@mainline.proxy.rlwy.net:PORT/railway"
 DB_CONFIG = {
-    "host":     "mainline.proxy.rlwy.net",
-    "port":     15026,
-    "dbname":   "railway",
-    "user":     "postgres",
-    "password": "gmQKUZTlgvsJFwPtVSkpQmOGndWYsJqt",
+    "host":     os.environ.get("PGHOST", "mainline.proxy.rlwy.net"),
+    "port":     int(os.environ.get("PGPORT", 15026)),
+    "dbname":   os.environ.get("PGDATABASE", "railway"),
+    "user":     os.environ.get("PGUSER", "postgres"),
+    "password": os.environ.get("PGPASSWORD", "gmQKUZTlgvsJFwPtVSkpQmOGndWYsJqt"),
 }
 # -----------------------------------------------------------------------
 
