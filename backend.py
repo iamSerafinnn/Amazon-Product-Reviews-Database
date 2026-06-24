@@ -42,6 +42,7 @@ DB_CONFIG = {
     "user":     os.environ.get("PGUSER", "postgres"),
     "password": os.environ.get("PGPASSWORD", "gmQKUZTlgvsJFwPtVSkpQmOGndWYsJqt"),
 }
+print(f"Connecting to DB: {DB_CONFIG['host']}:{DB_CONFIG['port']}")
 # -----------------------------------------------------------------------
 
 
