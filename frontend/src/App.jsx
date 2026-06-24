@@ -3,9 +3,9 @@ import './App.css'
 
 // Const Values - API URL Link, Page Size
 // -----------------------------------------------------------------------
-// const API_URL = 'https://amazon-product-reviews-database-production.up.railway.app'
+const API_URL = 'https://amazon-product-reviews-database-production.up.railway.app'
 // const API_URL = 'http://127.0.0.1:8000'
-const API_URL = 'http://192.168.1.207:8000'
+// const API_URL = 'http://192.168.1.207:8000'
 const PAGE_SIZE = 10
 // -----------------------------------------------------------------------
 
