@@ -28,7 +28,7 @@ def load_documents(data_dir="data"):
     # Load all the products from the database
     if products:
         for product in products:
-            product_docs.append(product["description"])
+            product_docs.append(product["title"])
             product_ids.append(product["product_id"])
         print("Database has been filled!")
         return product_docs, product_ids
@@ -174,10 +174,10 @@ def retrieve(query, model, index, chunks_ids, k):
     # Searching the acquired indices
     for distance, idx in zip(distances[0], indices[0]):
 
-        # # If the distance to similarity is too far,
-        # # just skip it
-        # if distance > 2.0:
-        #     continue
+        # If the distance to similarity is too far,
+        # just skip it
+        if distance > 2.0:
+            continue
 
         # Retrieve the product IDs
         pid = chunks_ids[idx]
