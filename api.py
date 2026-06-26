@@ -85,7 +85,7 @@ else:
 
     # Retrieving the product IDs and descriptions
     for p in products:
-        product_docs.append(p["description"])
+        product_docs.append(p["title"])
         product_ids.append(p["product_id"])
 
     print("Chunking and embedding...")
